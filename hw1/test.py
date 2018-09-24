@@ -17,9 +17,9 @@ for i in range(len(test_data)):
                 continue
 #=======================
 test_data = np.array(test_data)
-#weight1 = np.load("./parameter/rmsProp 0.5 lr=0.0004 (1)/weight.npy")
-#weight2 = np.load("./parameter/rmsProp 0.5 lr=0.0004 (2)/weight.npy")
-#weight3 = np.load("./parameter/rmsProp 0.5 lr=0.0004 (3)/weight.npy")
+#weight1 = np.load("./weight1.npy")
+#weight2 = np.load("./weight2.npy")
+#weight3 = np.load("./weight3.npy")
 weight4 = np.load("./weight.npy")
 #bias = np.load("./bias.npy")
 mean = np.load("./mean.npy")

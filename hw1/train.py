@@ -75,7 +75,7 @@ mean_square_error=0
 error=0
 iteration=0
 learning_rate=0.002
-regular = 0
+regular = 0.001
 epoch=500
 error_list=[]
 
