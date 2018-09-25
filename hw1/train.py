@@ -23,14 +23,14 @@ datalist=[]
 labellist=[]
 for i in range(len(data)//18):
     for j in range(16):
-        if i == len(data)//18-1 and j == 15:
+        if (i == len(data)//18-1 or (i+1)%20==0) and j == 15:
             continue
         datalist.append(data[i*18:(i+1)*18,j:j+9])
         if j != 15:
             labellist.append(data[i*18+9,j+9])
         else:
             labellist.append(data[(i+1)*18+9,0])
-    if i!=len(data)/18-1:
+    if i!=len(data)/18-1 and (i+1)%20!=0:
         for k in range(16,24):
             concat1=data[(i)*18:(i+1)*18,k:]
             concat2=data[(i+1)*18:(i+2)*18,:k+9-24]
@@ -61,7 +61,6 @@ for i in range(len(datalist)):
 for i in range(len(datalist)):
     datalist[i] = np.concatenate((np.reshape(datalist[i], (162,)), [1.0]))
     
-
 train_data = list(datalist[len(datalist)//10:])
 train_label = list(labellist[len(datalist)//10:])
 validation_data = list(datalist[:len(datalist)//10])
@@ -75,7 +74,7 @@ mean_square_error=0
 error=0
 iteration=0
 learning_rate=0.002
-regular = 0.001
+regular = 0.001 #now best 0.001
 epoch=500
 error_list=[]
 
@@ -99,13 +98,9 @@ for i in range(epoch):
         
         
         m_0=beta_1*m_0+(1-beta_1)*gradient
-        #m_0_b=beta_1*m_0_b+(1-beta_1)*gradient_b
         v_0=beta_2*v_0+(1-beta_2)*(gradient**2)
-        #v_0_b=beta_2*v_0_b+(1-beta_2)*(gradient_b**2)    
         mt_hat=m_0/(1-beta_1**iteration)   
-        #mt_b_hat=m_0_b/(1-beta_1**iteration)
         vt_hat=v_0/(1-beta_2**iteration)
-        #vt_b_hat=v_0_b/(1-beta_2**iteration)
         
         weight=weight-learning_rate*(mt_hat/(np.sqrt(vt_hat)+epsilon) )
         #bias=bias-learning_rate*(mt_b_hat/(vt_b_hat**0.5+0.00000001))
@@ -113,7 +108,6 @@ for i in range(epoch):
         weight = weight - learning_rate*gradient
         #bias = bias - learning_rate*gradient_b
         '''
-    #if(i%400==0):learning_rate*=0.66
     for j in range(len(validation_data)):
         output=np.dot(weight, validation_data[j])#+bias[0]
         square_error=((validation_label[j]-output)**2) + 0.5*regular*np.dot(weight,weight)
