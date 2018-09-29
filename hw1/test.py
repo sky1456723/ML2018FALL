@@ -1,7 +1,7 @@
 import sys
 import numpy as np
 
-test=open('./test.csv')
+test=open(sys.argv[1])
 test_data=test.readlines()
 #======================
 for i in range(len(test_data)):
@@ -28,7 +28,7 @@ stddev = np.load("./stddev.npy")
 
 
 
-file_out=open('hw1.csv','w')
+file_out=open(sys.argv[2],'w')
 file_out.write('id,value')
 file_out.write('\n')
 for i in range(len(test_data)//18):
