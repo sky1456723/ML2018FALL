@@ -22,8 +22,8 @@ test_data = np.array(test_data)
 #weight3 = np.load("./weight3.npy")
 weight4 = np.load("./param_best/weight.npy")
 #bias = np.load("./bias.npy")
-feature_mean = np.load("./mean.npy")
-feature_stddev = np.load("./stddev.npy")
+feature_mean = np.load("./param_best/mean.npy")
+feature_stddev = np.load("./param_best/stddev.npy")
 
 
 
