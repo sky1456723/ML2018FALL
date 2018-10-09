@@ -95,10 +95,10 @@ for i in range(len(datalist)):
 
 #np.random.shuffle(whole_data)
 train_data = whole_data[:2*len(datalist)//12]
-train_data.extend(whole_data[5*len(datalist)//12:11*len(datalist)//12])
+train_data.extend(whole_data[4*len(datalist)//12:11*len(datalist)//12])
 
 #train_label = labellist[len(labellist)//10:]
-validation_data = whole_data[3*len(datalist)//12:5*len(datalist)//12]
+validation_data = whole_data[2*len(datalist)//12:4*len(datalist)//12]
 #validation_label = list(labellist[:1*len(labellist)//10])
 
 train_data9 = list(datalistPM25[len(datalist)//10:])
@@ -114,8 +114,8 @@ mean_square_error=0
 error=0
 iteration=0
 learning_rate=0.001
-regular = 0 #now best 0.001
-epoch=300
+regular = 0.01 #now best 0.001
+epoch=500
 error_list=[]
 
 
