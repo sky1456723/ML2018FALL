@@ -35,6 +35,7 @@ train_x = train_x.drop(['EDUCATION'], axis = 1)
 train_x = pd.concat([train_x, education], axis =1)
 train_x = train_x.drop(['MARRIAGE'], axis = 1)
 train_x = pd.concat([train_x, marriage], axis =1)
+
 train_x = train_x.drop(['PAY_0'], axis = 1)
 train_x = pd.concat([train_x, pay_0], axis =1)
 train_x = train_x.drop(['PAY_2'], axis = 1)
@@ -47,6 +48,10 @@ train_x = train_x.drop(['PAY_5'], axis = 1)
 train_x = pd.concat([train_x, pay_5], axis =1)
 train_x = train_x.drop(['PAY_6'], axis = 1)
 train_x = pd.concat([train_x, pay_6], axis =1)
+
+#train_x = pd.concat([train_x, pd.DataFrame(train_x['BILL_AMT1']/train_x['LIMIT_BAL'])], axis =1)
+
+
 
 #end process training data
 
@@ -98,7 +103,7 @@ while True:
 #finish pre-processing
 
 #model initialization
-weight = np.random.randn(94,1) #include bias
+weight = np.random.randn(data_dim+1,1) #include bias
 
 
 #training
@@ -107,9 +112,9 @@ def train(epoch, batch, weight):
     learning_rate = 0.001
     beta1 = 0.9
     beta2 = 0.999
-    m_0 = np.zeros((94,1))
-    v_0 = np.zeros((94,1))
-    epsilon = np.ones((94,1))* 0.00000001
+    m_0 = np.zeros((data_dim+1,1))
+    v_0 = np.zeros((data_dim+1,1))
+    epsilon = np.ones((data_dim+1,1))* 0.00000001
     
     iteration = 0
     for epoch_num in range(epoch):
@@ -139,7 +144,7 @@ def train(epoch, batch, weight):
             
             epoch_loss += cross_entropy[0][0]
             #if p=0.5 -> class_0
-            ans = (output > np.array([[0.5]*batch])).astype(np.int8)
+            ans = (output >= np.array([[0.5]*batch])).astype(np.int8)
             acc = np.sum(ans == np.transpose(batch_label)) / batch
             epoch_acc += acc
         print("loss: ", epoch_loss / (len(data_list)/batch))
@@ -147,5 +152,8 @@ def train(epoch, batch, weight):
             
     return weight
 
-weight = train(100,50,weight)
+weight = train(200,50,weight)
+np.save("./parameter/logistic/weight.npy", weight)
+np.save("./parameter/logistic/mean.npy", mean)
+np.save("./parameter/logistic/stddev.npy", stddev)
 
