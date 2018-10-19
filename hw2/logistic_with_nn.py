@@ -120,26 +120,26 @@ train_x = pd.concat([train_x, pay_6], axis =1)
 data_iter = train_x.iterrows() #iterator: (id, pd.Series)
 label_iter = train_y.iterrows() #iterator: (id, pd.Series)
 
-num_unit = 20
+num_unit = 50
 while True:
     try:
         data = np.reshape(next(data_iter)[1].values, (93, 1))
         label = next(label_iter)[1].values[0]
     except:
         break
-    data = np.concatenate( (data, [[1]]*num_unit), axis = 0 )
+    #data = np.concatenate( (data, [[1]]*num_unit), axis = 0 )
     data_list.append( (data, label) )
 #finish pre-processing
-data_dim = train_x.shape[1]+num_unit-1
-print("Finish processing")
+data_dim = train_x.shape[1]
 #model initialization
 weight = np.random.randn(num_unit,1) #include bias
-hidden = np.random.randn(data_dim+1,num_unit)
+hidden = np.random.randn(data_dim,num_unit)
 output_bias = 1
+hidden_bias = np.ones((num_unit,1))
 def sigmoid(x):
     return 1/(1+np.exp(-1*x)) 
 #training
-def train(epoch, batch, weight, hidden, output_bias):
+def train(epoch, batch, weight, hidden, output_bias, hidden_bias):
     
     learning_rate = 0.001
     beta1 = 0.9
@@ -150,9 +150,13 @@ def train(epoch, batch, weight, hidden, output_bias):
     v_0 = np.zeros((num_unit,1))
     epsilon = np.ones((num_unit,1))* 0.00000001
     
-    m_0h = np.zeros((data_dim+1,num_unit))
-    v_0h = np.zeros((data_dim+1,num_unit))
-    epsilon_h = np.ones((data_dim+1,num_unit))* 0.00000001
+    
+    m_0hb =  np.zeros((num_unit,1))
+    v_0hb =  np.zeros((num_unit,1))
+    epsilon_hb = np.ones((num_unit,1))* 0.00000001
+    m_0h = np.zeros((data_dim,num_unit))
+    v_0h = np.zeros((data_dim,num_unit))
+    epsilon_h = np.ones((data_dim,num_unit))* 0.00000001
     
     iteration = 0
     for epoch_num in range(epoch):
@@ -168,7 +172,7 @@ def train(epoch, batch, weight, hidden, output_bias):
             batch_label = np.reshape(batch_label, (1, batch))
             
             #(num_unit, batch)
-            hidden_out = np.matmul(np.transpose(hidden), batch_data.T)
+            hidden_out = np.matmul(np.transpose(hidden), batch_data.T)+hidden_bias
             hidden_out_activate = sigmoid(hidden_out)
             #(1, batch)
             Z = np.matmul(np.transpose(weight), hidden_out_activate)
@@ -187,6 +191,7 @@ def train(epoch, batch, weight, hidden, output_bias):
             
             #(num_unit, batch)
             gradient2 = -1 * np.matmul(w_1, output_diag) * hidden_out_activate*(1-hidden_out_activate) ###
+            hidden_bias_grad = np.matmul(gradient2, np.array([[1]]*batch) )
             #(num, feature)
             gradient2 = np.matmul(gradient2, batch_data)
             hidden_grad = gradient2.T
@@ -203,12 +208,17 @@ def train(epoch, batch, weight, hidden, output_bias):
             mt_hat=m_0/(1-beta1**iteration)   
             vt_hat=v_0/(1-beta2**iteration)
             
+            m_0hb = beta1*m_0b+(1-beta1)*hidden_bias_grad
+            v_0hb=beta2*v_0b+(1-beta2)*(hidden_bias_grad**2)
             m_0h=beta1*m_0h+(1-beta1)*hidden_grad
             v_0h=beta2*v_0h+(1-beta2)*(hidden_grad**2)
+            mthb_hat=m_0hb/(1-beta1**iteration)  
+            vthb_hat=v_0hb/(1-beta2**iteration)
             mth_hat=m_0h/(1-beta1**iteration)   
             vth_hat=v_0h/(1-beta2**iteration)
             #print( (mt_hat/(np.sqrt(vt_hat)+epsilon)).shape)
             output_bias = output_bias - learning_rate *(mtb_hat/(np.sqrt(vtb_hat)+0.00000001) )
+            hidden_bias = hidden_bias - learning_rate *(mthb_hat/(np.sqrt(vthb_hat)+epsilon_hb) )
             weight=weight-learning_rate*(mt_hat/(np.sqrt(vt_hat)+epsilon) )
             hidden=hidden-learning_rate*(mth_hat/(np.sqrt(vth_hat)+epsilon_h) )
             '''
@@ -224,10 +234,13 @@ def train(epoch, batch, weight, hidden, output_bias):
         print("loss: ", epoch_loss / (len(data_list)/batch))
         print("acc: ", epoch_acc / (len(data_list)/batch))
             
-    return weight, hidden, output_bias
+    return weight, hidden, output_bias, hidden_bias
 
-weight, hidden, bias= train(100,50,weight, hidden, output_bias)
-#np.save("./parameter/logistic/weight.npy", weight)
-#np.save("./parameter/logistic/mean.npy", mean)
-#np.save("./parameter/logistic/stddev.npy", stddev)
+weight, hidden, output_bias, hidden_bias= train(500,50,weight, hidden, output_bias, hidden_bias)
+np.save("./parameter/logistic/weight.npy", weight)
+np.save("./parameter/logistic/hidden.npy", hidden)
+np.save("./parameter/logistic/output_bias.npy", output_bias)
+np.save("./parameter/logistic/hidden_bias.npy", hidden_bias)
+np.save("./parameter/logistic/mean.npy", mean)
+np.save("./parameter/logistic/stddev.npy", stddev)
 
