@@ -8,16 +8,16 @@ Created on Sun Oct 14 15:51:09 2018
 
 import numpy as np
 import pandas as pd
-#import sys
+import sys
 
-test_x = pd.read_csv('./data/test_x.csv')
-w_T = np.load('./parameter/generative/weight.npy')
-bias = np.load('./parameter/generative/bias.npy')
+test_x = pd.read_csv(sys.argv[3])
+w_T = np.load('./parameter_best/generative/weight.npy')
+bias = np.load('./parameter_best/generative/bias.npy')
 
 data_dim = test_x.shape[1]
 
 data_iter = test_x.iterrows()
-output_file = open('./result/generative/1014_gen2.csv','w')
+output_file = open(sys.argv[4],'w')
 output_file.write('id,value\n')
 while True:
     try:

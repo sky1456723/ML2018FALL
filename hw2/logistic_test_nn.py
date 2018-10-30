@@ -7,14 +7,15 @@ Created on Sat Oct 20 16:28:20 2018
 """
 import numpy as np
 import pandas as pd
+import sys
 
-test_x = pd.read_csv('./data/test_x.csv')
-output_weight = np.load('./parameter/logistic/NN/weight.npy')
-output_bias = np.load('./parameter/logistic/NN/output_bias.npy')
-hidden_weight = np.load('./parameter/logistic/NN/hidden.npy')
-hidden_bias = np.load('./parameter/logistic/NN/hidden_bias.npy')
-mean = np.load('./parameter/logistic/NN/mean.npy')
-stddev = np.load('./parameter/logistic/NN/stddev.npy')
+test_x = pd.read_csv(sys.argv[3])
+output_weight = np.load('./parameter_best/NN/weight.npy')
+output_bias = np.load('./parameter_best/NN/output_bias.npy')
+hidden_weight = np.load('./parameter_best/NN/hidden.npy')
+hidden_bias = np.load('./parameter_best/NN/hidden_bias.npy')
+mean = np.load('./parameter_best/NN/mean.npy')
+stddev = np.load('./parameter_best/NN/stddev.npy')
 
 sex = pd.get_dummies(test_x['SEX'], prefix='gender')
 education = pd.get_dummies(test_x['EDUCATION'], prefix='education')
@@ -72,7 +73,7 @@ data_iter = test_x.iterrows()
 def sigmoid(x):
     return 1/(1+np.exp(-1*x)) 
 
-file = open("./result/logistic/NN/1020_2_NN.csv",'w')
+file = open(sys.argv[4],'w')
 file.write('id,value\n')
 while True:
     try:
