@@ -95,4 +95,4 @@ history = model.fit_generator(augmentData.flow(training, training_label, batch_s
                    validation_steps = len(validation)//100,
                    epochs = 200)#, callbacks = [early])
 
-model.save("my_cnn.h5")
+model.save("./model/my_cnn.h5")
