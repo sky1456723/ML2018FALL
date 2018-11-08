@@ -45,7 +45,7 @@ def get_optimizer(params):
         don't modify params
     """
     #Change to Adam
-    optimizer = torch.optim.Adam(params, lr=0.001)
+    optimizer = torch.optim.Adamax(params, lr=0.001)
     return optimizer
 
 def get_eval_spec():
@@ -137,7 +137,7 @@ def save_model_as(train_history, validation_history):
     """
     n_epoch = len(train_history)
     if n_epoch == 40:
-        return 'mobile_1_seed1009'
+        return 'mobile_1_adamax'
     else:
         return None
 
