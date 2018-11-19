@@ -45,7 +45,7 @@ def get_optimizer(params):
         don't modify params
     """
     #Change to Adam
-    optimizer = torch.optim.Adamax(params, lr=0.001)
+    optimizer = torch.optim.Adamax(params, lr=0.0005)
     return optimizer
 
 def get_eval_spec():
@@ -96,15 +96,16 @@ def before_epoch(train_history, validation_history):
             batchsize: an integer between 1 and 64
     """
     transform = transforms.Compose([
-        transforms.Resize(224),
-        transforms.RandomAffine(degrees = 40, scale = (0.8,1.2),
-                                shear = 0.3),
+        transforms.RandomCrop(224),
+        transforms.ColorJitter(0.2,0.2,0.2),
+        transforms.RandomAffine(degrees = 20, scale = (0.8,1.2),
+                                shear = 0.2),
         transforms.RandomHorizontalFlip(0.3),
-        #transforms.RandomVerticalFlip(0.3),
+        transforms.RandomVerticalFlip(0.1),
         transforms.ToTensor(),
         ])
     n_epoch = len(train_history)
-    return {"transform": transform, "batchsize": 16}
+    return {"transform": transform, "batchsize": 32}
 
 def before_batch(train_history, validation_history):
     """
@@ -123,7 +124,7 @@ def before_batch(train_history, validation_history):
     notes:
         drop_out should always be None when using resnet50 since there are no dropout layers in it
     """
-    return {"optimizer": {"lr": 0.001}, "batch_norm": None, "drop_out": None}
+    return {"optimizer": {"lr": 0.0005}, "batch_norm": None, "drop_out": None}
 
 def save_model_as(train_history, validation_history):
     """
@@ -137,8 +138,8 @@ def save_model_as(train_history, validation_history):
         or None indicating no saving is desired for this epoch
     """
     n_epoch = len(train_history)
-    if n_epoch == 50:
-        return 'resnet_1_seed1009'
+    if n_epoch == 20:
+        return 'resnet_1119'
     else:
         return None
 
