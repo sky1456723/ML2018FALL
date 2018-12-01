@@ -165,5 +165,5 @@ for e in range(epoch):
     print("Loss: ",epoch_loss)
     print("Accuracy: ",acc)
 
-model.save("./first_model.pkl")
+torch.save(model,"./first_model.pkl")
         
