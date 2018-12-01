@@ -69,40 +69,71 @@ for id in range(1,len(train_x)):
 #Finish data preprocessing
 
 batch_size = 32
-epoch = 100
-
-short_dataset = Data.ChatbotDataset(data_x = short_data, data_y = short_label)
+epoch = 20
+#training set
+short_dataset = Data.ChatbotDataset(data_x = short_data[len(short_data)//10:],
+                                    data_y = short_label[len(short_data)//10:])
 short_dataloader = torch.utils.data.DataLoader(dataset = short_dataset,
                                          batch_size = batch_size,
                                          collate_fn = Data.collate_fn,
                                          shuffle = True,
                                          num_workers = 1)
 
-medium_dataset = Data.ChatbotDataset(data_x = medium_data, data_y = medium_label)
+medium_dataset = Data.ChatbotDataset(data_x = medium_data[len(medium_data)//10:],
+                                     data_y = medium_label[len(medium_data)//10:])
 medium_dataloader = torch.utils.data.DataLoader(dataset = medium_dataset,
                                          batch_size = batch_size,
                                          collate_fn = Data.collate_fn,
                                          shuffle = True,
                                          num_workers = 1)
 
-long_dataset = Data.ChatbotDataset(data_x = long_data, data_y = long_label)
+long_dataset = Data.ChatbotDataset(data_x = long_data[len(long_data)//10:],
+                                   data_y = long_label[len(long_data)//10:])
 long_dataloader = torch.utils.data.DataLoader(dataset = long_dataset,
                                          batch_size = batch_size,
                                          collate_fn = Data.collate_fn,
                                          shuffle = True,
                                          num_workers = 1)
+#validation set
+val_short_dataset = Data.ChatbotDataset(data_x = short_data[:len(short_data)//10],
+                                        data_y = short_label[:len(short_data)//10])
+val_short_dataloader = torch.utils.data.DataLoader(dataset = val_short_dataset,
+                                         batch_size = batch_size,
+                                         collate_fn = Data.collate_fn,
+                                         shuffle = True,
+                                         num_workers = 1)
+
+val_medium_dataset = Data.ChatbotDataset(data_x = medium_data[:len(medium_data)//10],
+                                         data_y = medium_label[:len(medium_data)//10])
+val_medium_dataloader = torch.utils.data.DataLoader(dataset = val_medium_dataset,
+                                                    batch_size = batch_size,
+                                                    collate_fn = Data.collate_fn,
+                                                    shuffle = True,
+                                                    num_workers = 1)
+
+val_long_dataset = Data.ChatbotDataset(data_x = long_data[:len(long_data)//10],
+                                       data_y = long_label[:len(long_data)//10])
+val_long_dataloader = torch.utils.data.DataLoader(dataset = val_long_dataset,
+                                         batch_size = batch_size,
+                                         collate_fn = Data.collate_fn,
+                                         shuffle = True,
+                                         num_workers = 1)
+
+
 #Finish data loading
 
 wv_size = wv.vector_size
-h_size = 256
+h_size = 300
 n_layers = 2
-dropout = 0
-bi = True
-dnn_units = [512,256,128]
+dropout = 0.4
+bi = False
+dnn_units = [400,256,128]
+dnn_drop = [0.4,0.4,0.4]
 
 model = Model.MLHW4(wv_size = wv_size, h_size = h_size,
                     n_layers = n_layers, dropout_rate = dropout,
-                    bi = bi, dnn_units = dnn_units).to(device)
+                    bi = bi, dnn_units = dnn_units,
+                    dnn_dropout = dnn_drop).to(device)
 criterion = nn.BCELoss()
 optimizer = torch.optim.RMSprop(model.parameters(), lr=0.001)
 print("Starting training")
@@ -111,14 +142,18 @@ print(device)
 for e in range(epoch):
     epoch_loss = 0
     acc = 0
+    val_epoch_loss = 0
+    val_acc = 0
     print("Epoch: ",e+1)
+    model = model.train()
     for data, label, length in short_dataloader:
-        data = data.to(device)
+        data = data.to(device).transpose(1,0)
         label = label.to(device)
         length = length.to(device)
-        
+        #print(data.shape)
         optimizer.zero_grad()
         pred = model(data, length)
+        #print(pred.shape)
         loss = criterion(pred, label)
         loss.backward()
         nn.utils.clip_grad_norm_(model.parameters(), 5)
@@ -128,7 +163,7 @@ for e in range(epoch):
         pred_ans = (pred>0.5).to(torch.float32)
         acc += torch.sum(torch.eq(pred_ans,label)).to(torch.float32).item()
     for data, label, length in medium_dataloader:
-        data = data.to(device)
+        data = data.to(device).transpose(1,0)
         label = label.to(device)
         length = length.to(device)
         
@@ -144,7 +179,7 @@ for e in range(epoch):
         acc += torch.sum(torch.eq(pred_ans,label)).to(torch.float32).item()
         
     for data, label, length in long_dataloader:
-        data = data.to(device)
+        data = data.to(device).transpose(1,0)
         label = label.to(device)
         length = length.to(device)
         
@@ -162,8 +197,55 @@ for e in range(epoch):
     acc /= (len(short_dataset) + len(medium_dataset)+len(long_dataset))
     epoch_loss /= (len(short_dataloader)  +
                    len(medium_dataloader) + len(long_dataloader))
+    
+    ### validation ###
+    model = model.eval()
+    for data, label, length in val_short_dataloader:
+        data = data.to(device).transpose(1,0)
+        label = label.to(device)
+        length = length.to(device)
+        
+        pred = model(data, length)
+        loss = criterion(pred, label)
+        
+        val_epoch_loss += loss.item()
+        pred_ans = (pred>0.5).to(torch.float32)
+        val_acc += torch.sum(torch.eq(pred_ans,label)).to(torch.float32).item()
+    for data, label, length in val_medium_dataloader:
+        data = data.to(device).transpose(1,0)
+        label = label.to(device)
+        length = length.to(device)
+        
+        pred = model(data, length)
+        loss = criterion(pred, label)
+        
+        val_epoch_loss += loss.item()
+        pred_ans = (pred>0.5).to(torch.float32)
+        val_acc += torch.sum(torch.eq(pred_ans,label)).to(torch.float32).item()
+        
+    for data, label, length in val_long_dataloader:
+        data = data.to(device).transpose(1,0)
+        label = label.to(device)
+        length = length.to(device)
+        
+        pred = model(data, length)
+        loss = criterion(pred, label)
+        
+        val_epoch_loss += loss.item()
+        pred_ans = (pred>0.5).to(torch.float32)
+        val_acc += torch.sum(torch.eq(pred_ans,label)).to(torch.float32).item()
+    
+    val_acc /= (len(val_short_dataset) +
+                len(val_medium_dataset) +
+                len(val_long_dataset))
+    val_epoch_loss /= (len(val_short_dataloader) +
+                       len(val_medium_dataloader) +
+                       len(val_long_dataloader))
+    
     print("Loss: ",epoch_loss)
     print("Accuracy: ",acc)
+    print("val_Loss: ",val_epoch_loss)
+    print("val_Accuracy: ",val_acc)
 
 torch.save(model,"./first_model.pkl")
         
