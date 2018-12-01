@@ -12,8 +12,9 @@ import keras.models
 import keras.utils
 import  pandas as pd
 import numpy as np
+import sys
 
-file = pd.read_csv("test.csv")
+file = pd.read_csv(sys.argv[1])
 data = file['feature']
 data = data.str.split()
 data = list(data)
@@ -41,7 +42,7 @@ result7 = model7.predict(data)
 result = (result1+result2+result3+result4+result5+result6+result7)/7
 class_label = list(map(np.argmax,result))
 
-newFile = open("answer_ens_7.csv","w")
+newFile = open(sys.argv[2],"w")
 newFile.write("id,label\n")
 for i in range(len(class_label)):
     newFile.write(str(i)+","+str(class_label[i])+"\n")

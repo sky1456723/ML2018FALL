@@ -12,10 +12,12 @@ import numpy as np
 import keras.preprocessing
 import keras.regularizers
 import keras.initializers
+import keras.layers
 import keras.optimizers
 import os
+import sys
 
-data = pd.read_csv("train.csv")
+data = pd.read_csv(sys.argv[1])
 x_train = data[:]['feature']
 x_train = x_train.str.split()
 
@@ -35,48 +37,50 @@ training = x_train_data2[len(x_train_data2)//10:,:,:,:]
 validation = x_train_data2[:len(x_train_data2)//10,:,:,:]
 training_label = y_train[len(y_train)//10:,:]
 validation_label = y_train[:len(y_train)//10,:]
-augmentData = keras.preprocessing.image.ImageDataGenerator(zoom_range = 0.4, rotation_range = 50, shear_range = 0.2,
+augmentData = keras.preprocessing.image.ImageDataGenerator(zoom_range = 0.4, rotation_range = 30, shear_range = 0.2,
                                                            horizontal_flip=True, vertical_flip = False, fill_mode = "constant")
 originData = keras.preprocessing.image.ImageDataGenerator()
 
-model = keras.Sequential()
-model.add(keras.layers.Conv2D(64,(3,3),input_shape=(48,48,1), kernel_initializer = keras.initializers.he_normal(), padding='same') )
-model.add(keras.layers.BatchNormalization())
-model.add(keras.layers.PReLU())
-model.add(keras.layers.Conv2D(64,(3,3), kernel_initializer = keras.initializers.he_normal(), padding='same') )
-model.add(keras.layers.BatchNormalization())
-model.add(keras.layers.PReLU())
-model.add(keras.layers.MaxPooling2D((2,2)))
-model.add(keras.layers.Dropout(0.25))
-model.add(keras.layers.Conv2D(128,(3,3), kernel_initializer = keras.initializers.he_normal(), padding='same') )
-model.add(keras.layers.BatchNormalization())
-model.add(keras.layers.PReLU())
-model.add(keras.layers.Conv2D(128,(3,3), kernel_initializer = keras.initializers.he_normal(), padding='same') )
-model.add(keras.layers.BatchNormalization())
-model.add(keras.layers.PReLU())
-#model.add(keras.layers.MaxPooling2D((2,2)))
-model.add(keras.layers.Dropout(0.25))
-model.add(keras.layers.Conv2D(128,(3,3), kernel_initializer = keras.initializers.he_normal(), padding='same', strides = 2))
-model.add(keras.layers.BatchNormalization())
-model.add(keras.layers.PReLU())
-model.add(keras.layers.Conv2D(128,(3,3), kernel_initializer = keras.initializers.he_normal(), padding='same') )
-model.add(keras.layers.BatchNormalization())
-model.add(keras.layers.PReLU())
-model.add(keras.layers.Conv2D(128,(3,3), kernel_initializer = keras.initializers.he_normal(), padding='same', strides = 2))
-model.add(keras.layers.BatchNormalization())
-model.add(keras.layers.PReLU())
-model.add(keras.layers.Dropout(0.25))
-model.add(keras.layers.Flatten())
-model.add(keras.layers.Dense(units=400, kernel_initializer = keras.initializers.he_normal()) )
-model.add(keras.layers.BatchNormalization())
-model.add(keras.layers.PReLU())
-model.add(keras.layers.Dropout(0.3))
-model.add(keras.layers.Dense(units=256, kernel_initializer = keras.initializers.he_normal()) )
-model.add(keras.layers.BatchNormalization())
-model.add(keras.layers.PReLU())
-model.add(keras.layers.Dropout(0.3))
-model.add(keras.layers.Dense(units=7, kernel_initializer = keras.initializers.he_normal()))
-model.add(keras.layers.Activation('softmax'))
+#model = keras.Sequential()
+input_image = keras.layers.Input(shape=(48,48,1))
+input1 = keras.layers.Conv2D(64,(3,3), padding='same')(input_image)
+input1 = keras.layers.BatchNormalization()(input1)
+input1 = keras.layers.PReLU()(input1)
+input1 = keras.layers.Conv2D(64,(3,3), padding='same')(input1)
+input1 = keras.layers.BatchNormalization()(input1)
+input1 = keras.layers.PReLU()(input1)
+input1 = keras.layers.MaxPooling2D((2,2))(input1)
+input1 = keras.layers.Dropout(0.3)(input1)
+input2 = keras.layers.Conv2D(128,(3,3), padding='same')(input1)
+input2 = keras.layers.BatchNormalization()(input2)
+input2 = keras.layers.PReLU()(input2)
+input2 = keras.layers.Conv2D(128,(3,3), padding='same')(input2)
+input2 = keras.layers.BatchNormalization()(input2)
+input2 = keras.layers.PReLU()(input2)
+input2 = keras.layers.MaxPooling2D((2,2))(input2)
+input2 = keras.layers.Dropout(0.3)(input2)
+input2 = keras.layers.Conv2D(128,(3,3), padding='same')(input2)
+input2 = keras.layers.BatchNormalization()(input2)
+input2 = keras.layers.PReLU()(input2)
+input2 = keras.layers.Conv2D(128,(3,3), padding='same')(input2)
+input2 = keras.layers.BatchNormalization()(input2)
+input2 = keras.layers.PReLU()(input2)
+input2 = keras.layers.Dropout(0.3)(input2)
+input2 = keras.layers.MaxPooling2D((2,2))(input2)
+
+input2 = keras.layers.Flatten()(input2)
+input2 = keras.layers.Dense(units=512 )(input2)
+input2 = keras.layers.BatchNormalization()(input2)
+input2 = keras.layers.PReLU()(input2)
+input2 = keras.layers.Dropout(0.4)(input2)
+input2 = keras.layers.Dense(units=256 )(input2)
+input2 = keras.layers.BatchNormalization()(input2)
+input2 = keras.layers.PReLU()(input2)
+input2 = keras.layers.Dropout(0.4)(input2)
+input2 = keras.layers.Dense(units=7 )(input2)
+out = keras.layers.Activation('softmax')(input2)
+
+model = keras.models.Model(inputs = input_image, outputs = out)
 
 optimizer = keras.optimizers.Adam(lr=0.001)
 model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
@@ -93,4 +97,4 @@ history = model.fit_generator(augmentData.flow(training, training_label, batch_s
                    validation_steps = len(validation)//100,
                    epochs = 200)#, callbacks = [early])
 
-model.save("./model/my_cnn_adamax.h5")
+model.save("./model/cnn_check.h5")
