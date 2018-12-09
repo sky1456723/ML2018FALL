@@ -169,9 +169,9 @@ h_size = 200
 n_layers = 2
 dropout = 0.4
 bi = True
-dnn_units = [20,20]
-dnn_drop = [0.3,0.3]
-n_embedding = dummy_index
+dnn_units = [100,100]
+dnn_drop = [0.5,0.5]
+n_embedding = dummy_index+1
 embedding_dim = wv_matrix.shape[1]
 
 model = Model.MLHW4(wv_size = wv_size, h_size = h_size,
@@ -209,7 +209,7 @@ for e in range(epoch):
         #print(pred.shape)
         loss = criterion(pred, label)
         loss.backward()
-        #nn.utils.clip_grad_norm_(model.recurrent.parameters(), 5)
+        #nn.utils.clip_grad_norm_(model.recurrent.parameters(), 3)
         optimizer.step()
         
         epoch_loss += loss.item()
@@ -224,7 +224,7 @@ for e in range(epoch):
         pred = model(data, length)
         loss = criterion(pred, label)
         loss.backward()
-        #nn.utils.clip_grad_norm_(model.recurrent.parameters(), 5)
+        #nn.utils.clip_grad_norm_(model.recurrent.parameters(), 3)
         optimizer.step()
         
         epoch_loss += loss.item()
@@ -239,7 +239,7 @@ for e in range(epoch):
         pred = model(data, length)
         loss = criterion(pred, label)
         loss.backward()
-        #nn.utils.clip_grad_norm_(model.recurrent.parameters(), 5)
+        #nn.utils.clip_grad_norm_(model.recurrent.parameters(), 3)
         optimizer.step()
         
         epoch_loss += loss.item()
@@ -302,7 +302,7 @@ for e in range(epoch):
     print("val_Accuracy: ",val_acc)
     if val_acc >= best_acc:
         best_acc = val_acc
-        torch.save(model,"./GRU_bi_2.pkl")
+        torch.save(model,"./GRU_bi_reg.pkl")
         #torch.save(optimizer.state_dict(),"./small.optim")
 
 print("Best Acc: ", best_acc)

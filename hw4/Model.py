@@ -72,7 +72,7 @@ class MLHW4(torch.nn.Module):
                 nn.init.orthogonal_(matrix[:h_size,:])
                 nn.init.orthogonal_(matrix[h_size:2*h_size,:])
                 nn.init.orthogonal_(matrix[2*h_size:3*h_size,:])
-                nn.init.orthogonal_(matrix[3*h_size:4*h_size,:])
+                #nn.init.orthogonal_(matrix[3*h_size:4*h_size,:])
     
         
         

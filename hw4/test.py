@@ -34,7 +34,7 @@ dummy_col = np.zeros(wv_matrix.shape[1]).reshape(1, -1)
 dummy_index = wv_matrix.shape[0]
 wv_matrix = np.vstack((wv_matrix, dummy_col))
 
-model = torch.load("./model/GRU_bi_2.pkl").to(device)
+model = torch.load("./model/GRU_bi_DNN_more.pkl").to(device)
 model = model.eval()
 testing_data = []
 prediction = []
