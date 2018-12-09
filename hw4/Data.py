@@ -114,4 +114,48 @@ def collate_fn(batch_data):
         
         data_seq_len = [torch.Tensor([data[2]]) for data in batch_data]
         data_seq_len = torch.stack(data_seq_len).long()    
-        return batch_x, batch_y, data_seq_len, label_seq_len
+        return batch_x, batch_y, data_seq_len
+    
+def collate_no_sort(batch_data):
+    data_type = str(type(batch_data[0][0]))
+    if data_type == "<class 'numpy.ndarray'>":
+        #padding data
+        word_vec_size = batch_data[0][0].shape[1]
+        max_data_len = max(batch_data, key=lambda x:x[2])[2]
+        for data_num in range(len(batch_data)):
+            data_len = batch_data[data_num][2]
+            if max_data_len - data_len > 0:
+                pad = [[0]*word_vec_size]*(max_data_len - data_len)
+                pad = np.array(pad)
+                unpadded = batch_data[data_num][0]
+                batch_data[data_num][0] = np.concatenate((unpadded, pad),
+                                                         axis = 0)
+        
+        batch_x = [torch.Tensor(data[0]) for data in batch_data]
+        batch_x = torch.stack(batch_x) 
+        batch_y = [torch.Tensor(data[1]) for data in batch_data]
+        batch_y = torch.stack(batch_y) 
+        
+        data_seq_len = [torch.Tensor([data[2]]) for data in batch_data]
+        data_seq_len = torch.stack(data_seq_len).long()    
+        return batch_x, batch_y, data_seq_len
+    elif data_type == "<class 'list'>":
+        #padding data
+        #batch[0][0] : list of shape (seq_len, word_vec_size) 
+        #batch[0][1] : list of shape (seq_len, one_hot_size)
+        
+        word_vec_size = len(batch_data[0][0][0])
+        max_data_len = max(batch_data, key=lambda x:x[2])[2]
+        for data_num in range(len(batch_data)):
+            data_len = batch_data[data_num][2]
+            for i in range(max_data_len - data_len):
+                batch_data[data_num][0].append([0]*word_vec_size)
+        
+        batch_x = [torch.Tensor(data[0]) for data in batch_data]
+        batch_x = torch.stack(batch_x) 
+        batch_y = [torch.Tensor(data[1]) for data in batch_data]
+        batch_y = torch.stack(batch_y) 
+        
+        data_seq_len = [torch.Tensor([data[2]]) for data in batch_data]
+        data_seq_len = torch.stack(data_seq_len).long()    
+        return batch_x, batch_y, data_seq_len
