@@ -132,7 +132,7 @@ def main(args):
         print("Start Validation")
         val_loss = 0
         val_acc = 0
-        val_dataloader = get_dataloader(val_data, batch_size = args.bathc_size)
+        val_dataloader = get_dataloader(val_data, batch_size = args.batch_size)
         ans_list = []
         label_list = []
         for b_num, (data, label) in enumerate(val_dataloader):

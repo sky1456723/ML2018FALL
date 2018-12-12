@@ -45,11 +45,10 @@ def get_dataloader(data_list):
 
 def get_dataloader_RGB(data_list, transform=None, normalize=None):
     part_data = []
-    part_label = []
     print(len(data_list))
     for i, pair in enumerate(data_list):
         print(i,end='\r')
-        img = Image.open(os.path.join(img_dirs, pair[0]))
+        img = Image.open(os.path.join(img_dirs, pair))
         if transform != None:
             img = img.convert(mode="RGB")
             img = transform(img)
@@ -60,23 +59,20 @@ def get_dataloader_RGB(data_list, transform=None, normalize=None):
             img = img.resize((224,224))
             img = np.array(img) / 255
             img = np.transpose(img, axes=[2,0,1])
-        label = pair[1].split()
-        label = np.array([int(c) for c in label])
-        part_label.append(label)
         part_data.append(img)
 
     batch = 4
     label_data_x = torch.Tensor(part_data)
-    label_data_y = torch.Tensor(part_label)
-    label_dataset = torch.utils.data.TensorDataset(label_data_x, label_data_y)
+    label_dataset = torch.utils.data.TensorDataset(label_data_x)
     label_dataloader = torch.utils.data.DataLoader(dataset = label_dataset,
                                                    batch_size =batch,
                                                    shuffle = False,
                                                    num_workers = 1 )
-    del part_data, part_label
+    del part_data
     return label_dataloader
 
-input_size = sys.argv[3]
+input_size = int(sys.argv[3])
+print(input_size == 224)
 model_name = sys.argv[1]
 model_path = os.path.join("./",model_name)
 model = torch.load(model_path).to(device)
@@ -95,14 +91,20 @@ while not last:
     print("Part ",count)
     if input_size == 224:
         dataloader = get_dataloader_RGB(test_data[count*1000:(count+1)*1000])
+        for i, data in enumerate(dataloader):
+            print("Batch: ", i, end='\r')
+            pred = model.output_act( model(data[0].to(device)) )
+            for one_row in pred.cpu().data.numpy():
+                ans_list.append(one_row)
     else:
         dataloader = get_dataloader(test_data[count*1000:(count+1)*1000])
+        for i, data in enumerate(dataloader):
+            print("Batch: ", i, end='\r')
+            pred = model.output_act( model(model.pre_conv(data[0].to(device))) )
+            for one_row in pred.cpu().data.numpy():
+                ans_list.append(one_row)
     count += 1
-    for i, data in enumerate(dataloader):
-        print("Batch: ", i, end='\r')
-        pred = model.output_act( model(model.pre_conv(data[0].to(device))) )
-        for one_row in pred.cpu().data.numpy():
-            ans_list.append(one_row)
+    
             
 output_id = np.expand_dims(np.array(test_data),axis=1)
 output = np.hstack((output_id, ans_list))
