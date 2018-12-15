@@ -37,7 +37,7 @@ img_dirs = os.path.join(root_dir,"medical_images","images")
 
 normalize = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 transformList = []
-transformList.append(transforms.RandomResizedCrop(700))
+transformList.append(transforms.RandomResizedCrop(224))
 transformList.append(transforms.RandomHorizontalFlip())
 transformList.append(transforms.ToTensor())
 transformList.append(normalize)      
@@ -57,7 +57,7 @@ def get_dataloader(data_list, transform=None, normalize=None, batch_size = 4):
         else:
             T = []
             normalize = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-            T.append(transforms.Resize(700))
+            T.append(transforms.Resize(224))
             T.append(transforms.ToTensor())
             T.append(normalize)      
             T=transforms.Compose(T)
@@ -75,7 +75,7 @@ def get_dataloader(data_list, transform=None, normalize=None, batch_size = 4):
     label_dataset = torch.utils.data.TensorDataset(label_data_x, label_data_y)
     label_dataloader = torch.utils.data.DataLoader(dataset = label_dataset,
                                                    batch_size =batch,
-                                                   shuffle = False,
+                                                   shuffle = True,
                                                    num_workers = 1 )
     del part_data, part_label
     return label_dataloader
@@ -87,6 +87,7 @@ def main(args):
         base_model.classifier = torch.nn.Linear(in_features = base_model.classifier.in_features,
                                                 out_features = 14,
                                                 bias = True)
+        '''
         base_model.add_module("pre_conv",
                       torch.nn.Sequential(
                           torch.nn.Conv2d(3,64, kernel_size=(8,8), stride = (1,1), padding = 1 ), #695x695
@@ -108,14 +109,17 @@ def main(args):
                           torch.nn.Dropout2d(0.3)
                       )
                      )
+        '''
         base_model.add_module("output_act",torch.nn.Sigmoid())
         base_model = base_model.to(device)
-        optimizer = torch.optim.Adam(base_model.parameters(),lr=0.001)
+        optimizer = torch.optim.Adam(base_model.parameters(), lr=0.0001, betas=(0.9, 0.999), eps=1e-08, weight_decay=1e-5)
+        scheduler = torch.optim.ReduceLROnPlateau(optimizer, factor = 0.1, patience = 5, mode = 'min')
     elif args.load_model:
-        model = torch.load(args.model_name)
+        base_model = torch.load(args.model_name)
         optimizer = torch.optim.Adam(base_model.parameters(),lr=0.001)
         state_dict = torch.load(args.model_name+".optim")
         optimizer.load_state_dict(state_dict)
+        scheduler = torch.optim.ReduceLROnPlateau(optimizer, factor = 0.1, patience = 5, mode = 'min')
     #preconv_optimizer = torch.optim.Adam(base_model.pre_conv.parameters(),lr=0.001)
     criterion = torch.nn.BCELoss()
 
@@ -144,7 +148,7 @@ def main(args):
                 label = label.to(device)
                 optimizer.zero_grad()
                 #preconv_optimizer.zero_grad()
-                pred = base_model.output_act( base_model(base_model.pre_conv(data)) )
+                pred = base_model.output_act( base_model(data)) 
                 loss = criterion(pred,label)
                 loss.backward()
                 optimizer.step()
@@ -164,11 +168,14 @@ def main(args):
             print("Batch: ", b_num, end='\r')
             data = data.to(device)
             label = label.to(device)
-            pred = base_model.output_act( base_model(base_model.pre_conv(data)) )
+            pred = base_model.output_act( base_model(data) )
+            val_loss += criterion(pred,label)
             for one_row in pred.cpu().data.numpy():
                 ans_list.append(one_row)
             for one_row in label.cpu().data.numpy():
                 label_list.append(one_row)
+        scheduler.step(val_loss)
+        val_loss = val_loss.item()
         del val_dataloader
         auroc = sklearn.metrics.roc_auc_score(np.array(label_list),np.array(ans_list))
         if auroc > best_auroc:
@@ -176,8 +183,9 @@ def main(args):
             torch.save(optimizer.state_dict(), model_name+".optim")
             best_auroc = auroc
         print("")
-        print("Epoch loss: ",8*epoch_loss/(9*len(label_data)//10) )
+        print("Epoch loss: ",args.batch_size*epoch_loss/(9*len(label_data)//10) )
         print("Epoch acc: ",epoch_acc/(9*len(label_data)//10) )
+        print("Val loss: ",args.batch_size*val_loss/len(val_data))
         print("AUROC: ",auroc )
     
     

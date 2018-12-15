@@ -7,6 +7,7 @@ import torch
 import torch.utils
 import torch.nn.functional as F
 import torchvision
+import torchvision.transforms as transforms
 import gc
 import sys
 
@@ -21,48 +22,26 @@ for i in test_file.index:
     test_data.append(test_file.loc[i]["Image Index"])
 img_dirs = os.path.join(root_dir,"medical_images","images")
                       
-def get_dataloader(data_list):
-    part_data = []
-    print(len(data_list))
-    for i, name in enumerate(data_list):
-        print(i,end='\r')
-        img = Image.open(os.path.join(img_dirs, name))
-        img = img.convert(mode="L")
-        img = img.resize((512,512))
-        img = np.array(img)
-        img = np.expand_dims(img, axis=0) / 255
-        part_data.append(img)
 
-    batch = 4
-    label_data_x = torch.Tensor(part_data)
-    label_dataset = torch.utils.data.TensorDataset(label_data_x)
-    label_dataloader = torch.utils.data.DataLoader(dataset = label_dataset,
-                                                   batch_size =batch,
-                                                   shuffle = False,
-                                                   num_workers = 1 )
-    del part_data
-    return label_dataloader
 
-def get_dataloader_RGB(data_list, transform=None, normalize=None):
+#normalize = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+transformList = []
+transformList.append(transforms.Resize(224))
+transformList.append(transforms.ToTensor())
+#transformList.append(normalize)      
+transformSequence=transforms.Compose(transformList)
+def get_dataloader_RGB(data_list, transform=None, normalize=None, batch_size = 4):
     part_data = []
     print(len(data_list))
     for i, pair in enumerate(data_list):
         print(i,end='\r')
         img = Image.open(os.path.join(img_dirs, pair))
-        if transform != None:
-            img = img.convert(mode="RGB")
-            img = transform(img)
-            img = np.array(img)/255
-            img = np.transpose(img, axes=[2,0,1])
-        else:
-            img = img.convert(mode="RGB")
-            img = img.resize((224,224))
-            img = np.array(img) / 255
-            img = np.transpose(img, axes=[2,0,1])
+        img = img.convert(mode="RGB")
+        img = transform(img) /255
         part_data.append(img)
 
-    batch = 4
-    label_data_x = torch.Tensor(part_data)
+    batch = batch_size
+    label_data_x = torch.stack(part_data)
     label_dataset = torch.utils.data.TensorDataset(label_data_x)
     label_dataloader = torch.utils.data.DataLoader(dataset = label_dataset,
                                                    batch_size =batch,
@@ -72,7 +51,6 @@ def get_dataloader_RGB(data_list, transform=None, normalize=None):
     return label_dataloader
 
 input_size = int(sys.argv[3])
-print(input_size == 224)
 model_name = sys.argv[1]
 model_path = os.path.join("./",model_name)
 model = torch.load(model_path).to(device)
@@ -84,23 +62,18 @@ ans_list = []
 class_name = open(os.path.join(root_dir,"medical_images","classname.txt")).readlines()
 first_row=["id"]
 first_row.extend([name.replace("\n","") for name in class_name])
-#ans_list.append(first_row)
+
 while not last:
-    if len(test_data[count*1000:(count+1)*1000]) == 0:
+    if len(test_data[count*3000:(count+1)*3000]) == 0:
         break
     print("Part ",count)
     if input_size == 224:
-        dataloader = get_dataloader_RGB(test_data[count*1000:(count+1)*1000])
+        dataloader = get_dataloader_RGB(test_data[count*3000:(count+1)*3000],
+                                       transform = transformSequence,
+                                       batch_size = 16)
         for i, data in enumerate(dataloader):
             print("Batch: ", i, end='\r')
             pred = model.output_act( model(data[0].to(device)) )
-            for one_row in pred.cpu().data.numpy():
-                ans_list.append(one_row)
-    else:
-        dataloader = get_dataloader(test_data[count*1000:(count+1)*1000])
-        for i, data in enumerate(dataloader):
-            print("Batch: ", i, end='\r')
-            pred = model.output_act( model(model.pre_conv(data[0].to(device))) )
             for one_row in pred.cpu().data.numpy():
                 ans_list.append(one_row)
     count += 1
