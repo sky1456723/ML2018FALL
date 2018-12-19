@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Mon Dec  3 23:26:04 2018
+Created on Sun Dec  9 16:02:53 2018
 
 @author: jimmy
 """
@@ -22,7 +22,7 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 
 print("Start cleaning Data")
-jieba.load_userdict("./data/dict.txt.big")
+jieba.load_userdict(sys.argv[2])
 test_file = open(sys.argv[1],'r')
 test_x = test_file.readlines()
 test_file.close()
@@ -36,6 +36,10 @@ wv_matrix = np.vstack((wv_matrix, dummy_col))
 
 model = torch.load("./model/GRU_bi_DNN_more.pkl").to(device)
 model = model.eval()
+model2 = torch.load("./model/GRU_bi_2.pkl").to(device)
+model2 = model2.eval()
+model3 = torch.load("./model/GRU_bi_3.pkl").to(device)
+model3 = model3.eval()
 testing_data = []
 prediction = []
 for id in range(1,len(test_x)):
@@ -70,11 +74,14 @@ print("Start Prediction")
 
 for data, dummy_label, length in dataloader:
     pred = model(data.to(device).long().squeeze(dim=-1), length.to(device))
+    pred2 = model2(data.to(device).long().squeeze(dim=-1), length.to(device))
+    pred3 = model3(data.to(device).long().squeeze(dim=-1), length.to(device))
+    pred = (pred+pred2+pred3)/3
     pred = (pred>0.5)
     for b in range(pred.shape[0]):
         prediction.append(pred[b,0].item())
 
-output_file = open(sys.argv[2],'w')
+output_file = open(sys.argv[3],'w')
 output_file.write("id,label\n")
 for n in range(len(prediction)):
     output_file.write(str(n)+","+str(prediction[n])+'\n')

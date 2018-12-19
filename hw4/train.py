@@ -17,18 +17,20 @@ import gensim
 import re
 import Data
 import Model
-import pickle
+import time
+import sys
+
 
 ### DEVICE ###
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 
 print("Start cleaning Data")
-jieba.load_userdict("./data/dict.txt.big")
-train_file = open("./data/train_x.csv")
+jieba.load_userdict(sys.argv[4])
+train_file = open(sys.argv[1])
 train_x = train_file.readlines()
 train_file.close()
-train_ans = open("./data/train_y.csv")
+train_ans = open(sys.argv[2])
 train_y = train_ans.readlines()
 train_ans.close()
 punctuation_search = re.compile("[\s+\.\!\/_,$%^*(+\"\']+|[+——\>\<！，。?？、\-～~@#￥%……&*（）：]+")
@@ -156,12 +158,7 @@ val_long_dataloader = torch.utils.data.DataLoader(dataset = val_long_dataset,
 
 
 #Finish data loading
-'''
-def criterion(pred,label):
-    boundary = torch.zeros_like(pred).to(device)
-    loss = torch.sum( torch.max(boundary, 1-label*pred) )/batch_size
-    return loss
-'''
+
 criterion = nn.BCELoss()
 
 wv_size = wv.vector_size
@@ -183,7 +180,6 @@ model = Model.MLHW4(wv_size = wv_size, h_size = h_size,
 model.init_embedding(torch.nn.Parameter(torch.Tensor(wv_matrix).to(device),
                                         requires_grad = True) )
 model = model.train()
-#model.change_rnn_init()
 optimizer = torch.optim.RMSprop(model.parameters(), lr=0.001,
                                 momentum=0.1, weight_decay=0)
 print("Starting training")
@@ -192,6 +188,7 @@ print(optimizer)
 print(device)
 best_acc = 0
 for e in range(epoch):
+    start = time.time()
     epoch_loss = 0
     acc = 0
     val_epoch_loss = 0
@@ -302,9 +299,9 @@ for e in range(epoch):
     print("val_Accuracy: ",val_acc)
     if val_acc >= best_acc:
         best_acc = val_acc
-        torch.save(model,"./GRU_bi_reg.pkl")
+        torch.save(model,"./Test_bench.pkl")
         #torch.save(optimizer.state_dict(),"./small.optim")
-
+    print("time: ",time.time()-start)
 print("Best Acc: ", best_acc)
 #torch.save(model,"./small.pkl")
 #torch.save(optimizer.state_dict(),"./small.optim")
