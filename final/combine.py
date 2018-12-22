@@ -169,7 +169,7 @@ def main(args):
         print("Epoch ",e)
         epoch_loss = 0
         epoch_acc = 0
-        
+        model = model.train()
         for part in range(4):
             gc.collect()
             print("Part ",part)
@@ -194,6 +194,7 @@ def main(args):
         
         print("")
         print("Start Validation")
+        model = model.eval()
         val_loss = 0
         val_acc = 0
         val_dataloader = get_dataloader(val_data, batch_size = args.batch_size)
