@@ -117,15 +117,17 @@ def get_dataloader_RGB(data_list, transform=None, normalize=None, batch_size = 4
     del part_data
     return label_dataloader
 
-model_name = sys.argv[1]
+model_path = sys.argv[1]
+"""
 model_path = os.path.join("./",model_name)
+"""
 model = torch.load(model_path).to(device)
 model = model.eval()
 
 count = 0
 
 ans_list = []
-class_name = open(os.path.join(root_dir,"medical_images","classname.txt")).readlines()
+class_name = open(os.path.join(root_dir,"classname.txt")).readlines()
 first_row=["id"]
 first_row.extend([name.replace("\n","") for name in class_name])
 
