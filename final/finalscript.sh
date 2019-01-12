@@ -12,7 +12,7 @@ wget -O model_10 https://www.dropbox.com/s/oc9tq0gwiq6zhth/test5?dl=0
 wget -O model_11 https://www.dropbox.com/s/z0dcz58w38g44nx/default_2?dl=0
 for i in {1..11}
 do
-    python3 ./test_combine_model.py model_$i model_$i.csv $1 $2
+	python3 ./test_combine_model.py ./model_$i ./model_$i.csv $1 $2
 done
 python3 ./test_combine_model.py ./model/Combine_more_aug.pkl  model_12.csv $1 $2
 python3 ./test_combine_model.py ./model/test_combine.pkl  model_13.csv $1 $2
