@@ -137,7 +137,7 @@ while True:
     print("Part ",count)
     dataloader = get_dataloader_RGB(test_data[count*3000:(count+1)*3000],
                                     transform = transformSequence,
-                                    batch_size = 16)
+                                    batch_size = 4)
     for i, data in enumerate(dataloader):
         print("Batch: ", i, end='\r')
         pred = model(data[0].to(device))
