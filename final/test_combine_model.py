@@ -81,13 +81,13 @@ class Combined_Model(torch.nn.Module):
 ### DEVICE ###
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-root_dir = os.path.join("../","data","ntu_final_data")
+root_dir = os.path.join(sys.argv[3])
 
-test_file = pd.read_csv(os.path.join(root_dir,"medical_images","test.csv"))
+test_file = pd.read_csv(os.path.join(root_dir,"test.csv"))
 test_data = []
 for i in test_file.index:
     test_data.append(test_file.loc[i]["Image Index"])
-img_dirs = os.path.join(root_dir,"medical_images","images")
+img_dirs = os.path.join(sys.argv[4])
                       
 
 
