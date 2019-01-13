@@ -1,6 +1,5 @@
 # Testing
-===========================.
-本次使用套件:Pytorch 0.4.1
+使用套件:Pytorch 0.4.1, numpy 1.14.5, pandas 0.23.4 
 在執行前，請先確認test.csv、classname.txt在同一folder下,
 之後再執行 ```finalscript.sh``` 以跑我們的model.  
 此檔案將下載所有不在github上的model, 一一testing並且ensemble.  
