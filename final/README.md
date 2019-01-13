@@ -1,10 +1,12 @@
 # Testing
-## 使用套件
+## 套件版本
 Pytorch 0.4.1, numpy 1.15.4, pandas 0.23.4.  
-****
+****  
+## 使用  
 在執行前，請先確認test.csv、classname.txt在同一folder下,  
 之後再執行 ```finalscript.sh``` 以跑我們的model.  
 此檔案將下載所有不在github上的model, 一一testing並且ensemble.  
+****  
 shell script用法如：  
 ```bash finalscript.sh "folder of classname.txt and test.csv" "folder of images"```  
 例如可用 "/home/deepq/data/ntu_final_data/medical_images/" 於 "foler of classname.txt and test.csv",  
