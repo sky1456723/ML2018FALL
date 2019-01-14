@@ -13,11 +13,12 @@ import torchvision
 import torchvision.transforms as transforms
 import gc
 import argparse
+import random
 
 class AutoEncoder(torch.nn.Module):
     def __init__(self,c_dim):
         super(AutoEncoder, self).__init__()
-        self.G_img_to_label = torch.nn.Sequential(torch.nn.Conv2d(3,128,kernel_size=(6,6),stride=(1,1)), #218x218
+        self.G_img_to_label = torch.nn.Sequential(torch.nn.Conv2d(3,128,kernel_size=(7,7),stride=(1,1)), #218x218
                                                   torch.nn.BatchNorm2d(128),
                                                   torch.nn.LeakyReLU(),
                                                   torch.nn.AvgPool2d((2,2)), #109x109
@@ -149,7 +150,7 @@ def get_dataloader(data_list, transform=None, normalize=None, batch_size = 4):
 
 def main(args):
     ### Define Model ###
-    supervised_model = torchvision.models.densenet121(pretrained = True)
+    supervised_model = torchvision.models.densenet201(pretrained = True)
     unsupervised_model = torch.load(args.unsupervised_model_name)
     model = Combined_Model(supervised_model, unsupervised_model).to(device)
     model = model.train()
@@ -160,10 +161,16 @@ def main(args):
 
     epoch = args.epoch_number
     model_name = args.model_name
-
+    """
     train_data = label_data[len(label_data)//10:]
     val_data = label_data[:len(label_data)//10]
-
+    """
+    c = [x for x in range(len(label_data))]
+    numb=len(label_data)//10
+    selected=random.sample(c,numb)
+    val_data=[label_data[i] for i in selected]
+    train_data=[label_data[m] for m in c if m not in selected]
+    
     best_auroc = 0 
     for e in range(epoch):
         print("Epoch ",e)
@@ -226,7 +233,7 @@ def main(args):
     
     
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='HW3-1 training')
+    parser = argparse.ArgumentParser(description='ML_FINAL_training')
     parser.add_argument('--model_name', type=str, default='default')
     parser.add_argument('--epoch_number', '-e', type=int, default=20)
     parser.add_argument('--batch_size', '-b', type=int, default=4)
