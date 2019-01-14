@@ -58,7 +58,6 @@ class AutoEncoder(torch.nn.Module):
         code = self.G_label_to_img(code)
         return code
 
-
 class Combined_Model(torch.nn.Module):
     def __init__(self, supervised, unsupervised):
         super(Combined_Model, self).__init__()
@@ -79,13 +78,12 @@ class Combined_Model(torch.nn.Module):
         s_out = self.classifier(s_out)
         s_out = F.sigmoid(s_out)
         return s_out
-
 ### DEVICE ###
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+"""
+root_dir = os.path.join(args.root_dir)
 
-root_dir = os.path.join("../","data","ntu_final_data")
-
-train_file = pd.read_csv(os.path.join(root_dir,"medical_images","train.csv"))
+train_file = pd.read_csv(os.path.join(args.root_dir,"train.csv"))
 label_data = []
 unlabel_data = []
 for i in train_file.index:
@@ -100,8 +98,8 @@ for i in train_file.index:
         label_data.append(p)
         
 
-img_dirs = os.path.join(root_dir,"medical_images","images")
-
+img_dirs = os.path.join(args.img_dirs)
+"""
 #Use /255 as normalize
 #normalize = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 transformList = []
@@ -110,7 +108,7 @@ transformList.append(transforms.RandomHorizontalFlip())
 transformList.append(transforms.ToTensor())
 #transformList.append(normalize)      
 transformSequence=transforms.Compose(transformList)
-def get_dataloader(data_list, transform=None, normalize=None, batch_size = 4):
+def get_dataloader(data_list, transform=None, normalize=None, batch_size = 4, img_dirs = None):
     part_data = []
     part_label = []
     print(len(data_list))
@@ -161,6 +159,23 @@ def main(args):
 
     epoch = args.epoch_number
     model_name = args.model_name
+    root_dir = os.path.join(args.root_dir)
+    train_file = pd.read_csv(os.path.join(args.root_dir,"train.csv"))
+    label_data = []
+    unlabel_data = []
+    for i in train_file.index:
+        if type(train_file.loc[i]["Labels"]) != str:
+            if math.isnan(train_file.loc[i]["Labels"]):
+                pass
+                '''
+                unlabel_data.append( [ train_file.loc[i]["Image Index"] ])
+                '''
+        else:
+            p = [train_file.loc[i]["Image Index"], train_file.loc[i]["Labels"]]
+            label_data.append(p)
+
+
+    img_dirs = os.path.join(args.imgs_dir)
     """
     train_data = label_data[len(label_data)//10:]
     val_data = label_data[:len(label_data)//10]
@@ -168,9 +183,8 @@ def main(args):
     c = [x for x in range(len(label_data))]
     numb=len(label_data)//10
     selected=random.sample(c,numb)
-    val_data=[label_data[i] for i in selected]
+    val_data =[label_data[i] for i in selected]
     train_data=[label_data[m] for m in c if m not in selected]
-    
     best_auroc = 0 
     for e in range(epoch):
         print("Epoch ",e)
@@ -183,7 +197,8 @@ def main(args):
             label_dataloader = get_dataloader(train_data[part*len(train_data)//4:(part+1)*len(train_data)//4],
                                              transform = transformSequence,
                                              normalize = None,
-                                             batch_size = args.batch_size)
+                                             batch_size = args.batch_size,
+                                             img_dirs = args.imgs_dir)
             for b_num, (data, label) in enumerate(label_dataloader):
                 data = data.to(device)
                 label = label.to(device)
@@ -204,7 +219,7 @@ def main(args):
         model = model.eval()
         val_loss = 0
         val_acc = 0
-        val_dataloader = get_dataloader(val_data, batch_size = args.batch_size)
+        val_dataloader = get_dataloader(val_data, batch_size = args.batch_size, img_dirs = args.img_dirs)
         ans_list = []
         label_list = []
         for b_num, (data, label) in enumerate(val_dataloader):
@@ -233,12 +248,13 @@ def main(args):
     
     
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='ML_FINAL_training')
+    parser = argparse.ArgumentParser(description='HW3-1 training')
     parser.add_argument('--model_name', type=str, default='default')
     parser.add_argument('--epoch_number', '-e', type=int, default=20)
     parser.add_argument('--batch_size', '-b', type=int, default=4)
     parser.add_argument('--supervised_model_name', '-s', type=str)
     parser.add_argument('--unsupervised_model_name', '-u', type=str)
-
+    parser.add_argument('--root_dir', '-r', type=str)
+    parser.add_argument('--imgs_dir', '-i', type=str)
     args = parser.parse_args()
     main(args)

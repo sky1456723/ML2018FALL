@@ -65,21 +65,6 @@ def criterion(true,pred):
 ### DEVICE ###
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-### Data ###
-root_dir = os.path.join("../","data","ntu_final_data")
-
-train_file = pd.read_csv(os.path.join(root_dir,"medical_images","train.csv"))
-label_data = []
-unlabel_data = []
-for i in train_file.index:
-    if type(train_file.loc[i]["Labels"]) != str:
-        if math.isnan(train_file.loc[i]["Labels"]):
-            unlabel_data.append( [ train_file.loc[i]["Image Index"] ])
-            
-        
-
-img_dirs = os.path.join(root_dir,"medical_images","images")
-
 
 ### Transform ###
 #normalize = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
@@ -91,7 +76,7 @@ transformList.append(transforms.ToTensor())
 transformSequence=transforms.Compose(transformList)
 
 
-def get_dataloader(data_list, transform=None, normalize=None, batch_size = 4):
+def get_dataloader(data_list, transform=None, normalize=None, batch_size = 4, img_dirs = None):
     part_data = []
     part_label = []
     print(len(data_list))
@@ -126,6 +111,24 @@ def get_dataloader(data_list, transform=None, normalize=None, batch_size = 4):
     return label_dataloader
 
 def main(args):
+    ### Data ###
+    root_dir = os.path.join(args.root_dir)
+
+    train_file = pd.read_csv(os.path.join(root_dir,"train.csv"))
+    label_data = []
+    unlabel_data = []
+    for i in train_file.index:
+        if type(train_file.loc[i]["Labels"]) != str:
+            if math.isnan(train_file.loc[i]["Labels"]):
+                unlabel_data.append( [ train_file.loc[i]["Image Index"] ])
+            
+        
+
+    img_dirs = os.path.join(args.imgs_dir)
+    
+    
+    
+    
     ### Define Model ###
     if args.new_model:
         #### Add model ###
@@ -155,7 +158,8 @@ def main(args):
             label_dataloader = get_dataloader(train_data[part*len(train_data)//20:(part+1)*len(train_data)//20],
                                              transform = transformSequence,
                                              normalize = None,
-                                             batch_size = args.batch_size)
+                                             batch_size = args.batch_size,
+                                             img_dirs = img_dirs)
             for b_num, data in enumerate(label_dataloader):
                 data = data[0].to(device)
                 optimizer.zero_grad()
@@ -174,10 +178,12 @@ def main(args):
     
     
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='ML_FINAL')
+    parser = argparse.ArgumentParser(description='HW3-1 training')
     parser.add_argument('--model_name', type=str, default='default')
     parser.add_argument('--epoch_number', '-e', type=int, default=20)
     parser.add_argument('--batch_size', '-b', type=int, default=4)
+    parser.add_argument('--root_dir', type=str)
+    parser.add_argument('--imgs_dir', type=str)
     mutex = parser.add_mutually_exclusive_group(required = True)
     mutex.add_argument('--load_model', '-l', action='store_true', help='load a pre-existing model')
     mutex.add_argument('--new_model', '-n', action='store_true', help='create a new model')
