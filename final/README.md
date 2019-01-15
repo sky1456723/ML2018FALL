@@ -18,4 +18,5 @@ shell script用法如：
 ```python3 test_combine_model.py "model名字" "輸出檔案（請在final/src底下）" "folder of classname.txt and test.csv" "folder of images"```  
 預設情況下會是 model_編號 對應到 model_編號.csv 為其結果，也請助教以此方式命名以免ensemble時找不到file，    
 當12個csv都有的時候ensemble.py才不會出錯  
+最後ensemble的結果為result.csv
 感謝TA們
